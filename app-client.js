@@ -4,11 +4,13 @@ $(function(){
 
     // var arr = sabreToTextConversion($('textarea#rawData').val().split('\n'));
 
+// https://git.heroku.com/limitless-badlands-97541.git
 
     var str = $('textarea#rawData').val();
-
+    // 'http://localhost:8080/tests/'
+//
     $.ajax({
-      url: 'http://localhost:8080/tests/',
+      url: $(location).attr('href') + 'tests/',
       method: 'GET',
       data: {"data": str},
       dataType: 'json',
