@@ -16,7 +16,8 @@ app.use('/jquery', express.static(__dirname + '/node_modules/jquery/dist/'));
 app.use('/ajax', express.static(__dirname + '/node_modules/ajax/lib/'));
 
 // port that will be used
-var  port = 8080;
+// var  port = 8080;
+var port = process.env.PORT || 8080;
 
 // an array to maintain the number
 // of connectons the server is currently
@@ -107,7 +108,7 @@ function sabreToTextConversion(arr){
 
 function getAirline()
 {
-  
+
 }
 
 function getAirport()
