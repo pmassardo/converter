@@ -1,4 +1,4 @@
-$(function(){
+$( document ).ready(function() {
 
   $('#convert').on('click',function(){
 
@@ -14,6 +14,7 @@ $(function(){
       method: 'GET',
       data: {"data": str},
       dataType: 'json',
+      cache: false
     }).done(function(data){
 
       // var t = 2;
