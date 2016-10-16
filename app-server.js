@@ -25,68 +25,179 @@ var port = process.env.PORT || 8080;
 var connections = [];
 var pg = require('pg');
 
-var config = {
-  user: 'alfredmassardo', //env var: PGUSER
-  database: 'converter', //env var: PGDATABASE
-  password: '', //env var: PGPASSWORD
-  port: 5432, //env var: PGPORT
-  max: 10, // max number of clients in the pool
-  idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
-};
-
-var pool = new pg.Pool(config);
+// var config = {
+//   user: 'alfredmassardo', //env var: PGUSER
+//   database: 'converter', //env var: PGDATABASE
+//   password: '', //env var: PGPASSWORD
+//   port: 5432, //env var: PGPORT
+//   max: 10, // max number of clients in the pool
+//   idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
+// };
+//postgres://yuactrbgkmsxkq:T88xaLeXp1IYTpe2zSvauuVi8h@ec2-54-235-217-221.compute-1.amazonaws.com:5432/d2n9p5v8r1voe9
+// var pool = new pg.Pool(config);
 
 var airports = {};
 var airlines = {};
 
-pool.connect(function(err, client, done) {
-  if(err) {
-    return console.error('error fetching client from pool', err);
-  }
-  // SELECT $1::int AS number
-  client.query('SELECT code, name FROM airport;', null , function(err, result) {
-    //call `done()` to release the client back to the pool
-    done();
+var localDB = "postgres://alfredmassardo:''@localhost:5432/converter";
 
-    if(err) {
-      return console.error('error running query', err);
-    }
+loadObject('SELECT code, name FROM airport;',loadAirport);
+loadObject('SELECT code, name FROM airline;',loadAirline);
 
-    result.rows.forEach(function(value) {
+function loadAirline(rows){
 
-      airports[value.code] = value.name;
+  rows.forEach(function(row) {
+
+    airlines[row.code] = row.name;
+
+  });
+
+}
+
+function loadAirport(rows){
+
+    rows.forEach(function(row) {
+
+      airports[row.code] = row.name;
 
     });
 
-  });
+}
 
-  client.query('SELECT code, name FROM airline;', null , function(err, result) {
-    //call `done()` to release the client back to the pool
-    done();
+function loadObject(queryString, callback){
 
-    if(err) {
-      return console.error('error running query', err);
+  pg.connect(process.env.DATABASE_URL||localDB, function(err, client, done) {
+
+    if (err) {
+      console.error(err);
+      done();
+      callback();
+      return;
     }
 
-    result.rows.forEach(function(value) {
+    client.query(queryString,function(err,result) {
 
-      airlines[value.code] = value.name;
+      // if error, stop here
+      if (err) {
+        console.error(err+'\nQuery: '+queryString);
+        done();
+        callback(); return;
+      }
 
-    })
+      // callback to close connection
+      done();
+
+      // callback with results
+      callback(result.rows);
+
+    });
+
 
   });
 
-});
+}
 
-pool.on('error', function (err, client) {
-  // if an error is encountered by a client while it sits idle in the pool
-  // the pool itself will emit an error event with both the error and
-  // the client which emitted the original error
-  // this is a rare occurrence but can happen if there is a network partition
-  // between your application and the database, the database restarts, etc.
-  // and so you might want to handle it and at least log it out
-  console.error('idle client error', err.message, err.stack)
-})
+// "postgres://YourUserName:YourPassword@localhost:5432/YourDatabase";
+
+// pg.defaults.ssl = true;
+
+// pg.connect(process.env.DATABASE_URL||"postgres://alfredmassardo:''@localhost:5432/converter", function(err, client, done) {
+//
+//   if (err) throw err;
+//   console.log('Connected to postgres! Getting schemas...');
+//
+//   client
+//     .query('SELECT code, name FROM airport;')
+//     .on('row', function(row) {
+//       // console.log('airports code -- ' + row.code);
+//       // console.log('airports name -- ' + row.name);
+//
+//       airports[row.code] = row.name;
+//
+//       // console.log(JSON.stringify(row));
+//     });
+//
+//   client
+//     .query('SELECT code, name FROM airline;')
+//     .on('row', function(row) {
+//
+//       airlines[row.code] = row.name;
+//
+//     });
+//
+//       .query.on('end', () => {
+//         done();
+//         return res.json(results);
+//       });
+//
+// });
+
+// console.log('airports key -- ' + JSON.stringify(airports));
+//
+// console.log('airports key -- ' + airports['YYZ']);
+// console.log('airports key -- ' + airports['YUL']);
+
+// for each (var item in airports) {
+//   console.log('airports key -- ' + item)
+//   // sum += item;
+// }
+
+    // airports.each(function(key, value) {
+    //
+    //   console.log('airports key -- ' + key)
+    //   console.log('airports value -- ' + value)
+    //
+    // });
+
+
+// pool.connect(function(err, client, done) {
+//   if(err) {
+//     return console.error('error fetching client from pool', err);
+//   }
+//   // SELECT $1::int AS number
+//   client.query('SELECT code, name FROM airport;', null , function(err, result) {
+//     //call `done()` to release the client back to the pool
+//     done();
+//
+//     if(err) {
+//       return console.error('error running query', err);
+//     }
+//
+//     result.rows.forEach(function(value) {
+//
+//       airports[value.code] = value.name;
+//
+//     });
+//
+//   });
+//
+//   client.query('SELECT code, name FROM airline;', null , function(err, result) {
+//     //call `done()` to release the client back to the pool
+//     done();
+//
+//     if(err) {
+//       return console.error('error running query', err);
+//     }
+//
+//     result.rows.forEach(function(value) {
+//
+//       airlines[value.code] = value.name;
+//
+//     })
+//
+//   });
+//
+// });
+
+// pool.on('error', function (err, client) {
+//   // if an error is encountered by a client while it sits idle in the pool
+//   // the pool itself will emit an error event with both the error and
+//   // the client which emitted the original error
+//   // this is a rare occurrence but can happen if there is a network partition
+//   // between your application and the database, the database restarts, etc.
+//   // and so you might want to handle it and at least log it out
+//   console.error('idle client error', err.message, err.stack)
+// })
 
 // state default data
 //var title = 'Untitled Presentation'
